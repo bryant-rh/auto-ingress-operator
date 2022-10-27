@@ -1,0 +1,71 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.9.2
+  creationTimestamp: null
+  name: autoingresses.apps.ingress.com
+spec:
+  group: apps.ingress.com
+  names:
+    kind: AutoIngress
+    listKind: AutoIngressList
+    plural: autoingresses
+    singular: autoingress
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: AutoIngress is the Schema for the autoingresses API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: AutoIngressSpec defines the desired state of AutoIngress
+            properties:
+              namespaceblacklist:
+                description: NameSpaceBlackList 如果不为空,则此集合里面的ns下的service 不会自动生成ingress
+                items:
+                  type: string
+                type: array
+              namespaces:
+                description: NameSpaces 如果不为空,则只会此集合里面的ns下的service 会自动生成ingress
+                items:
+                  type: string
+                type: array
+              rootDomain:
+                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
+                  RootDomain 为自动生成域名规则的根域名。'
+                type: string
+              servicePrefixes:
+                description: ServicePrefixes 匹配service前缀
+                items:
+                  type: string
+                type: array
+              tlsSecretName:
+                description: TlsSecretName 使用的证书名称。 在 ingress-controller 的命名空间下。
+                type: string
+            required:
+            - rootDomain
+            type: object
+          status:
+            description: AutoIngressStatus defines the observed state of AutoIngress
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

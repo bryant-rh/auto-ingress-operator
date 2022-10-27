@@ -1,0 +1,16 @@
+domain: ingress.com
+layout:
+- go.kubebuilder.io/v3
+projectName: auto-ingress-operator
+repo: github.com/bryant-rh/auto-ingress-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: ingress.com
+  group: apps
+  kind: AutoIngress
+  path: github.com/bryant-rh/auto-ingress-operator/api/v1
+  version: v1
+version: "3"

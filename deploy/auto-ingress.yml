@@ -1,0 +1,17 @@
+apiVersion: apps.ingress.com/v1
+kind: AutoIngress
+metadata:
+  name: autoingress-sample
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rootDomain: example.cn 
+  servicePrefixes:
+    - "srv"
+    - "web"
+  #namespaces: 
+  #  - ""
+  namespaceblacklist: 
+    - "kube-system"
+    - "ingress-nginx"
+  tlsSecretName: "tls-test"
