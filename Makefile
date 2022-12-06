@@ -84,7 +84,6 @@ docker-push: ## Push docker image with the manager.
 
 .PHONY: docker-buildx
 docker-buildx: ## Push docker image with the manager.
-	docker push ${IMG}
 	docker buildx build --push --progress plain --platform=${PLATFORM}	\
 		--cache-from "type=local,src=/tmp/.buildx-cache" \
 		--cache-to "type=local,dest=/tmp/.buildx-cache" \
