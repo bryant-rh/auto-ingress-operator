@@ -1,8 +1,13 @@
-
+VERSION = $(shell cat .version)
+COMMIT_SHA ?= $(shell git rev-parse --short HEAD)
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= bryantrh/auto-ingress-operator:${VERSION}-${COMMIT_SHA}
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
+
+CGO_ENABLED ?= 0
+GOBUILD=CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -a -ldflags "-X ${PKG}/version.Version=${VERSION}+sha.${COMMIT_SHA}"
+PLATFORM := linux/amd64,linux/arm64
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -62,7 +67,8 @@ test: manifests generate fmt vet envtest ## Run tests.
 
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+#	go build -o bin/manager main.go
+	$(GOBUILD) -o bin/manager main.go 
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
@@ -75,6 +81,16 @@ docker-build: test ## Build docker image with the manager.
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
+
+.PHONY: docker-buildx
+docker-buildx: ## Push docker image with the manager.
+	docker push ${IMG}
+	docker buildx build --push --progress plain --platform=${PLATFORM}	\
+		--cache-from "type=local,src=/tmp/.buildx-cache" \
+		--cache-to "type=local,dest=/tmp/.buildx-cache" \
+		--file=./Dockerfile \
+		--tag=${IMG} \
+		.
 
 ##@ Deployment
 
