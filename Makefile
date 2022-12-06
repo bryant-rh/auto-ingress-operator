@@ -4,7 +4,8 @@ COMMIT_SHA ?= $(shell git rev-parse --short HEAD)
 IMG ?= bryantrh/auto-ingress-operator:${VERSION}-${COMMIT_SHA}
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
-
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
 CGO_ENABLED ?= 0
 GOBUILD=CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -a -ldflags "-X ${PKG}/version.Version=${VERSION}+sha.${COMMIT_SHA}"
 PLATFORM := linux/amd64,linux/arm64
@@ -85,8 +86,6 @@ docker-push: ## Push docker image with the manager.
 .PHONY: docker-buildx
 docker-buildx: ## Push docker image with the manager.
 	docker buildx build --push --progress plain --platform=${PLATFORM}	\
-		--cache-from "type=local,src=/tmp/.buildx-cache" \
-		--cache-to "type=local,dest=/tmp/.buildx-cache" \
 		--file=./Dockerfile \
 		--tag=${IMG} \
 		.
