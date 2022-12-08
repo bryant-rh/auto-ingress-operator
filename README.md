@@ -1,94 +1,85 @@
 # auto-ingress-operator
-// TODO(user): Add simple overview of use/purpose
 
 ## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+为k8s集群里的service自动创建对应的ingress，可以指定service前缀，以及通过黑白名单来指定要生成的namespace
+
+域名规则: `<serviceName>---<namespace>.<autoIngressName>`
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
 **Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
 ### Running on the cluster
-1. Install Instances of Custom Resources:
+1.安装Operator
 
 ```sh
-kubectl apply -f config/samples/
+kubectl apply -f deploy/auto-ingress-operator.yaml
 ```
 
-2. Build and push your image to the location specified by `IMG`:
+
+2.创建自己的域名规则
 	
 ```sh
-make docker-build docker-push IMG=<some-registry>/auto-ingress-operator:tag
+kubectl apply -f deploy/auto-ingress.yaml
 ```
-	
-3. Deploy the controller to the cluster with the image specified by `IMG`:
+
+annotations 中定义的标签可以认为是公共标签， 最终将被继承到生成的 Ingress 中。 因此可以通过 annotation 选择的 IngressController， 并为该 Controller 配置一些公共标签。
+
+配置文件如下
+```yml
+apiVersion: apps.ingress.com/v1
+kind: AutoIngress
+metadata:
+  name: autoingress-sample
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rootDomain: example.cn
+  #servicePrefixes:
+  #  - "srv"
+  #  - "web"
+  namespaces:
+    - "infra--staging"
+  namespaceblacklist:
+    - "kube-system"
+    - "ingress-nginx"
+  tlsSecretName: "tls-test"
+```
++ `rootDomain`:         (必须), 后缀域名, 必须。
++ `servicePrefixes`:    (可选), 指定适配以 特定 关键字开头的 service,不指定匹配所有。
++ `namespaces`:         (可选), 只匹配特定namespace 下的service，不指定匹配所有namespace下svc。
++ `namespaceblacklist`: (可选), 适配特定namespace 下的service不生成ingress
++ `tlsSecretName`: （可选） 指定使用的 https 证书在 k8s 集群中的名字。
 
 ```sh
-make deploy IMG=<some-registry>/auto-ingress-operator:tag
+#cat auto-ingress.yaml
+
+apiVersion: apps.ingress.com/v1
+kind: AutoIngress
+metadata:
+  name: autoingress-sample
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rootDomain: example.cn
+  #servicePrefixes:
+  #  - "srv"
+  #  - "web"
+  namespaces:
+    - "infra--staging"
+  namespaceblacklist:
+    - "kube-system"
+    - "ingress-nginx"
+
+ 
+#kg svc -n infra--staging
+
+NAME          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+simple-demo   ClusterIP   172.16.106.30   <none>        80/TCP    89d
+
+#kg ingress -n infra--staging
+
+NAME                              CLASS    HOSTS                                     ADDRESS   PORTS   AGE
+simple-demo--autoingress-sample   <none>   simple-demo---infra--staging.example.cn             80      42h
+
 ```
-
-### Uninstall CRDs
-To delete the CRDs from the cluster:
-
-```sh
-make uninstall
-```
-
-### Undeploy controller
-UnDeploy the controller to the cluster:
-
-```sh
-make undeploy
-```
-
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
-
-### How it works
-This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
-
-It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/) 
-which provides a reconcile function responsible for synchronizing resources untile the desired state is reached on the cluster 
-
-### Test It Out
-1. Install the CRDs into the cluster:
-
-```sh
-make install
-```
-
-2. Run your controller (this will run in the foreground, so switch to a new terminal if you want to leave it running):
-
-```sh
-make run
-```
-
-**NOTE:** You can also run this in one step by running: `make install run`
-
-### Modifying the API definitions
-If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
-
-```sh
-make manifests
-```
-
-**NOTE:** Run `make --help` for more information on all potential `make` targets
-
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
-
-## License
-
-Copyright 2022.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
